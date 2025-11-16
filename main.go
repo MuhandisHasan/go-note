@@ -22,28 +22,41 @@ func main() {
 		}
 	}()
 
-	// note := Note{Title: "First Note", Content: "Hello this is first note"}
+	http.HandleFunc("/lol/{id}", func(w http.ResponseWriter, r *http.Request) {
 
-	// if err := SaveNotes(&note); err != nil {
-	// 	log.Fatal(err)
-	// }
+		id := r.PathValue("id")
 
-	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	// 	fmt.Fprintf(w, "Hello World")
-	// })
+		fmt.Fprintf(w, "Hello World "+id)
+	})
 
 	http.HandleFunc("/notes", func(w http.ResponseWriter, r *http.Request) {
 
-		notes, _ := GetNotes()
+		if r.Method == http.MethodGet {
 
-		resp := Response{
-			Status: "success",
-			Code:   200,
-			Data:   notes,
+			notes, _ := GetNotes()
+
+			resp := Response{
+				Status: "success",
+				Code:   200,
+				Data:   notes,
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(resp)
+
+		} else if r.Method == http.MethodPost {
+			var data Note
+
+			err := json.NewDecoder(r.Body).Decode(&data)
+
+			if err != nil {
+				http.Error(w, "Failed to decode JSON", http.StatusBadRequest)
+				return
+			}
+
+			SaveNotes(&data)
+
 		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
 
 	})
 
